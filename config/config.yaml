@@ -1,0 +1,93 @@
+# ============================================================
+# vn-wyckoff-early-watch - cấu hình tập trung (PHẦN 10)
+# Mọi ngưỡng tham số nằm ở đây, code không hard-code.
+# ============================================================
+
+version: "0.1.0"          # parameters_version, ghi vào predictions
+
+data:
+  start_date: "2022-01-01"
+  cache_dir: "data"
+  use_yfinance_fallback: true
+  request_sleep_seconds: 0.35   # tôn trọng rate limit giữa các request
+  max_retries: 3
+  retry_backoff_seconds: 2.0
+
+universe:
+  exchanges: ["HOSE", "HNX", "UPCOM"]
+  min_adv_vnd: 10000000000      # thanh khoản bình quân 20 phiên tối thiểu (VND)
+  min_price: 5000               # dưới mức này: giữ lại nhưng giảm confidence
+  exclude_low_liquidity: true
+  price_unit_multiplier: 1000   # giá vnstock theo nghìn đồng -> nhân 1000 ra VND (yfinance tự phát hiện)
+  max_missing_ratio: 0.10       # quá 10% ngày thiếu trong ~1 năm giao dịch -> loại
+  recent_window_days: 60        # cửa sổ đánh giá missing/stale data
+  max_ffill_gap: 2              # forward-fill tối đa 1-2 phiên (chỉ hiển thị, có cờ)
+  require_history_bars: 120     # tối thiểu số phiên lịch sử để tính tín hiệu
+
+indicators:
+  sma_period: 20
+  ema_short: 20
+  ema_mid: 50
+  ema_long: 200
+  volume_ma_period: 20
+  rsi_period: 14
+  atr_period: 14
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  mcdx:                          # MCDX là PLACEHOLDER - xem README
+    period: 14
+    mode: "macd_hist_slope_proxy"
+  obv_slope_period: 10
+  cmf_period: 20
+  mfi_period: 14
+  rs_percentile_window: 250
+  swing_lookback: 60             # cửa sổ tìm fractal swing
+  fractal_k: 2                   # fractal: cao/thấp nhất trong 2k+1 nến
+
+signals:
+  range_min_bars: 20
+  range_max_bars: 150
+  support_atr_tolerance: 1.0
+  spring_max_atr_penetration: 1.0
+  shakeout_min_volume_ratio: 1.5
+  test_volume_max_ratio: 0.8
+  test_lookback_days: 10
+  min_early_score: 60
+  min_confidence: 0.55
+  drawdown_threshold: 0.20       # giảm > 20% từ đỉnh 6 tháng = đã giảm sâu
+  lookback_6m: 126
+  dry_up_rvol: 0.7               # rvol <= 0.7 nhiều phiên = cạn cung
+  sos_min_gain_pct: 0.02         # phiên SOS: tăng >= 2% (hoặc trần ~7%)
+  breakout_vol_ratio: 1.5        # SOS cần volume >= 1.5x MA20
+  pullback_max_bars: 15
+  invalidation_sell_vol_ratio: 1.8
+  score_delta_upgrade: 10        # so sánh watchlist: đổi tier/score >= 10
+
+scoring:
+  weight_structure: 0.30
+  weight_vpa: 0.25
+  weight_momentum: 0.15
+  weight_relative_strength: 0.10
+  weight_liquidity: 0.10
+  weight_early_event: 0.10
+
+watchlist:
+  top_n: 30                      # số mã tối đa mỗi nhóm trong báo cáo md
+
+review:
+  horizons_days: [5, 10, 20]
+  success_min_excess_return: 0.0
+  strong_success_min_return: 0.07
+  sideways_band: 0.02            # |return| < 2% sau horizon = SIDEWAYS
+  entry_trigger_buffer: 0.005    # vượt trigger + 0.5% mới tính hit
+  stop_slippage: 0.002           # thủng stop - 0.2% mới tính hit (tránh nhiễu khớp ATC/ATO)
+
+market_regime:
+  use_benchmark: true
+  bullish_condition: "close > ema50 and close > ema200"
+  neutral_condition: "close > ema50 or close > ema200"
+
+logging:
+  level: "INFO"
+  file: "logs/app.log"
