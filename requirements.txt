@@ -1,0 +1,14 @@
+# vn-wyckoff-early-watch - requirements
+# Python 3.11+
+pandas>=2.0
+numpy>=1.24
+pyarrow>=14.0
+PyYAML>=6.0
+duckdb>=0.9
+typer>=0.9
+pytest>=7.4
+
+# Nguồn dữ liệu chính (khuyến nghị cài đặt để dùng pipeline thật):
+#   pip install vnstock        # dữ liệu CK Việt Nam miễn phí (HOSE/HNX/UPCOM)
+#   pip install yfinance       # fallback công khai, không cần tài khoản
+# Pipeline HOẠT ĐỘNG BÌNH THƯỜNG nếu thiếu 2 thư viện trên (chỉ log cảnh báo).
